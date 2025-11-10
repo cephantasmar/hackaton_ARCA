@@ -1,11 +1,38 @@
-# StudentGest
-
-StudentGest is a student management system designed to help educational institutions efficiently manage student data, attendance, grades, and more.
-
-## Features
-
-- Student registration and profile management
-- Attendance tracking
-- Grade and performance monitoring
-- User authentication and roles
-
+CREATE TABLE usuarios (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    rol VARCHAR(50) NOT NULL,
+    remuneracion DECIMAL(10,2),
+    cargo VARCHAR(100),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);CREATE TABLE antiguedad (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    usuario_id UUID REFERENCES usuarios(id) ON DELETE CASCADE,
+    fecha_inicio DATE NOT NULL,
+    fecha_actual DATE DEFAULT CURRENT_DATE,
+    tiempo_vacaciones INTEGER DEFAULT 0,
+    gestiones INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);CREATE TABLE contratos (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    usuario_id UUID REFERENCES usuarios(id) ON DELETE CASCADE,
+    fecha_inicio DATE NOT NULL,
+    salario DECIMAL(10,2) NOT NULL,
+    tiempo_prueba INTEGER DEFAULT 30,
+    activo BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);CREATE TABLE boletas_pago (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    usuario_id UUID REFERENCES usuarios(id) ON DELETE CASCADE,
+    contrato_id UUID REFERENCES contratos(id) ON DELETE CASCADE,
+    fecha DATE NOT NULL,
+    cobrado BOOLEAN DEFAULT false,
+    monto DECIMAL(10,2) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
