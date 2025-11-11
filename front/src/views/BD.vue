@@ -1,156 +1,184 @@
 <template>
   <div class="dashboard-container">
-    <!-- Header compacto -->
-    <div class="dashboard-header compact">
-      <div class="header-main">
-        <h1 class="title">Gestión de Usuarios - {{ tenantName }}</h1>
-        <div class="user-badge">
+    <!-- Header -->
+    <div class="dashboard-header">
+      <div class="header-content">
+        <h1 class="title">Gestión de Usuarios</h1>
+        <div class="user-info">
           <span class="user-email">{{ currentUserEmail }}</span>
-          <span class="tenant-badge">{{ tenantName }}</span>
         </div>
       </div>
     </div>
 
-    <!-- Alertas compactas -->
-    <div v-if="mensajeAlerta.show" :class="['alert', mensajeAlerta.type, 'compact']">
+    <!-- Alertas -->
+    <div v-if="mensajeAlerta.show" :class="['alert', mensajeAlerta.type]">
       <span class="alert-icon">{{ mensajeAlerta.type === 'success' ? '✓' : '⚠' }}</span>
       {{ mensajeAlerta.text }}
       <button class="alert-close" @click="mensajeAlerta.show = false">×</button>
     </div>
 
-    <!-- Panel de Control compacto -->
-    <div class="control-panel compact">
-      <div class="control-group">
-        <button 
-          @click="cargarUsuarios" 
-          class="btn btn-primary btn-icon btn-small" 
-          :disabled="cargando"
-        >
-          <span class="btn-icon">↻</span>
-          {{ cargando ? 'Cargando...' : 'Actualizar' }}
-        </button>
-        
-        <button 
-          @click="mostrarModalCrear = true" 
-          class="btn btn-success btn-icon btn-small"
-        >
-          <span class="btn-icon">+</span>
-          Crear Usuario
-        </button>
+    <!-- Panel de Control -->
+    <div class="control-panel">
+      <div class="panel-header">
+        <h2>Panel de Control</h2>
+        <div class="control-buttons">
+          <button 
+            @click="cargarUsuarios" 
+            class="btn btn-primary btn-icon" 
+            :disabled="cargando"
+          >
+            <span class="btn-icon">🔄</span>
+            {{ cargando ? 'Cargando...' : 'Actualizar' }}
+          </button>
+          
+          <button 
+            @click="mostrarModalCrear = true" 
+            class="btn btn-success btn-icon"
+          >
+            <span class="btn-icon">➕</span>
+            Crear Usuario
+          </button>
+        </div>
       </div>
       
-      <!-- Filtros por Rol -->
-      <div class="filters">
+      <!-- Filtros y Búsqueda -->
+      <div class="filters-section">
         <div class="filter-group">
           <label class="filter-label">Filtrar por Rol:</label>
-          <select v-model="filtroRol" @change="aplicarFiltroRol" class="filter-select">
+          <select v-model="filtroRol" @change="aplicarFiltros" class="filter-select">
             <option value="">Todos los roles</option>
-            <option value="Estudiante">Estudiante</option>
-            <option value="Profesor">Profesor</option>
-            <option value="Director">Director</option>
+            <option value="Admin">Admin</option>
+            <option value="Empleado">Empleado</option>
           </select>
+        </div>
+        
+        <div class="filter-group">
+          <label class="filter-label">Filtrar por Cargo:</label>
+          <input 
+            v-model="filtroCargo" 
+            @input="aplicarFiltros"
+            placeholder="Todos los cargos" 
+            class="filter-input"
+          >
         </div>
         
         <div class="search-group">
           <input 
             v-model="filtroBusqueda" 
-            placeholder="Buscar por nombre, email..." 
-            class="search-input compact"
+            @input="aplicarBusqueda"
+            placeholder="Buscar por nombre, email, cargo..." 
+            class="search-input"
           >
+          <span class="search-icon">🔍</span>
         </div>
       </div>
 
-      <!-- Stats compactas -->
-      <div class="stats compact">
-        <div class="stat-card compact" @click="filtroRol = ''; aplicarFiltroRol()" :class="{ active: !filtroRol }">
-          <span class="stat-number">{{ usuarios.length }}</span>
-          <span class="stat-label">Total</span>
+      <!-- Stats -->
+      <div class="stats-section">
+        <div class="stat-card" @click="filtroRol = ''; aplicarFiltros()" :class="{ active: !filtroRol }">
+          <div class="stat-icon">👥</div>
+          <div class="stat-content">
+            <span class="stat-number">{{ usuarios.length }}</span>
+            <span class="stat-label">Total Usuarios</span>
+          </div>
         </div>
-        <div class="stat-card compact" @click="filtroRol = 'Estudiante'; aplicarFiltroRol()" :class="{ active: filtroRol === 'Estudiante' }">
-          <span class="stat-number">{{ contarPorRol('Estudiante') }}</span>
-          <span class="stat-label">Estudiantes</span>
+        <div class="stat-card" @click="filtroRol = 'Admin'; aplicarFiltros()" :class="{ active: filtroRol === 'Admin' }">
+          <div class="stat-icon">👑</div>
+          <div class="stat-content">
+            <span class="stat-number">{{ contarPorRol('Admin') }}</span>
+            <span class="stat-label">Administradores</span>
+          </div>
         </div>
-        <div class="stat-card compact" @click="filtroRol = 'Profesor'; aplicarFiltroRol()" :class="{ active: filtroRol === 'Profesor' }">
-          <span class="stat-number">{{ contarPorRol('Profesor') }}</span>
-          <span class="stat-label">Profesores</span>
-        </div>
-        <div class="stat-card compact" @click="filtroRol = 'Director'; aplicarFiltroRol()" :class="{ active: filtroRol === 'Director' }">
-          <span class="stat-number">{{ contarPorRol('Director') }}</span>
-          <span class="stat-label">Directores</span>
+        <div class="stat-card" @click="filtroRol = 'Empleado'; aplicarFiltros()" :class="{ active: filtroRol === 'Empleado' }">
+          <div class="stat-icon">💼</div>
+          <div class="stat-content">
+            <span class="stat-number">{{ contarPorRol('Empleado') }}</span>
+            <span class="stat-label">Empleados</span>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Estado de Carga compacto -->
-    <div v-if="cargando" class="loading-state compact">
-      <div class="spinner small"></div>
+    <!-- Estado de Carga -->
+    <div v-if="cargando" class="loading-state">
+      <div class="spinner"></div>
       <p>Cargando usuarios...</p>
     </div>
 
-    <div v-if="error && !cargando" class="error-state compact">
-      <div class="error-icon">⚠</div>
+    <div v-if="error && !cargando" class="error-state">
+      <div class="error-icon">⚠️</div>
+      <h3>Error al cargar usuarios</h3>
       <p>{{ error }}</p>
-      <button @click="cargarUsuarios" class="btn btn-outline btn-small">Reintentar</button>
+      <button @click="cargarUsuarios" class="btn btn-outline">Reintentar</button>
     </div>
 
-    <!-- Tabla de Usuarios compacta -->
-    <div v-if="!cargando && usuariosFiltrados.length > 0" class="table-container compact">
-      <div class="table-header compact">
-        <h3>Usuarios ({{ usuariosFiltrados.length }})</h3>
+    <!-- Tabla de Usuarios -->
+    <div v-if="!cargando && usuariosFiltrados.length > 0" class="table-section">
+      <div class="table-header">
+        <h3>Lista de Usuarios</h3>
         <div class="table-info">
-          <span v-if="filtroRol" class="filter-indicator">
-            Filtrado por: <strong>{{ filtroRol }}</strong>
-            <button @click="filtroRol = ''; aplicarFiltroRol()" class="clear-filter">×</button>
+          <span class="user-count">{{ usuariosFiltrados.length }} usuarios</span>
+          <span v-if="filtroRol || filtroCargo" class="filter-indicator">
+            Filtros: 
+            <span v-if="filtroRol" class="filter-tag">{{ filtroRol }}</span>
+            <span v-if="filtroRol && filtroCargo" class="filter-separator">•</span>
+            <span v-if="filtroCargo" class="filter-tag">{{ filtroCargo }}</span>
+            <button @click="limpiarFiltros" class="clear-filter">Limpiar</button>
           </span>
         </div>
       </div>
 
-      <div class="table-responsive compact">
-        <table class="users-table compact">
+      <div class="table-container">
+        <table class="users-table">
           <thead>
             <tr>
-              <th class="col-id">ID</th>
               <th class="col-name">Nombre</th>
               <th class="col-email">Email</th>
-              <th class="col-role">Rol Actual</th>
-              <th class="col-new-role">Nuevo Rol</th>
+              <th class="col-cargo">Cargo</th>
+              <th class="col-remuneracion">Remuneración</th>
+              <th class="col-role">Rol</th>
               <th class="col-actions">Acciones</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="usuario in usuariosFiltrados" :key="usuario.id" class="user-row">
-              <td class="user-id">{{ usuario.id }}</td>
               <td class="user-name">
-                <div class="name-display">
+                <div class="avatar">{{ getInitials(usuario.nombre, usuario.apellido) }}</div>
+                <div class="name-info">
                   <strong>{{ usuario.nombre || 'N/A' }} {{ usuario.apellido || '' }}</strong>
+                  <small>ID: {{ usuario.id?.substring(0, 8) }}...</small>
                 </div>
               </td>
-              <td class="user-email compact">{{ usuario.email }}</td>
-              <td class="user-role">
-                <span :class="['role-badge', `role-${usuario.rol?.toLowerCase()}`]">
-                  {{ usuario.rol }}
+              <td class="user-email">
+                <span class="email-text">{{ usuario.email }}</span>
+              </td>
+              <td class="user-cargo">
+                <span class="cargo-badge">{{ usuario.cargo || 'Sin cargo' }}</span>
+              </td>
+              <td class="user-remuneracion">
+                <span class="remuneracion-value">
+                  {{ usuario.remuneracion ? `$${usuario.remuneracion.toLocaleString()}` : 'No especificado' }}
                 </span>
               </td>
-              <td class="user-new-role">
+              <td class="user-role">
                 <select 
-                  v-model="usuario.nuevoRol" 
-                  class="role-select compact"
-                  :class="{ changed: usuario.nuevoRol !== usuario.rol }"
+                  v-model="usuario.rol" 
+                  @change="actualizarRol(usuario)"
+                  :class="['role-select', `role-${usuario.rol?.toLowerCase()}`]"
+                  :disabled="actualizandoId === usuario.id"
                 >
-                  <option value="Estudiante">Estudiante</option>
-                  <option value="Profesor">Profesor</option>
-                  <option value="Director">Director</option>
+                  <option value="Admin">Administrador</option>
+                  <option value="Empleado">Empleado</option>
                 </select>
+                <div v-if="actualizandoId === usuario.id" class="update-spinner"></div>
               </td>
               <td class="user-actions">
                 <button 
-                  @click="actualizarRol(usuario)" 
-                  class="btn btn-update btn-small"
-                  :disabled="usuario.nuevoRol === usuario.rol || actualizandoId === usuario.id"
-                  :class="{ loading: actualizandoId === usuario.id }"
+                  @click="eliminarUsuario(usuario)" 
+                  class="btn btn-danger btn-sm"
+                  :disabled="actualizandoId === usuario.id"
                 >
-                  <span v-if="actualizandoId === usuario.id" class="btn-spinner small"></span>
-                  {{ actualizandoId === usuario.id ? '' : 'Actualizar' }}
+                  🗑️ Eliminar
                 </button>
               </td>
             </tr>
@@ -159,14 +187,14 @@
       </div>
     </div>
 
-    <!-- Estado Sin Datos compacto -->
-    <div v-if="!cargando && usuariosFiltrados.length === 0" class="empty-state compact">
+    <!-- Estado Sin Datos -->
+    <div v-if="!cargando && usuariosFiltrados.length === 0" class="empty-state">
       <div class="empty-icon">👥</div>
-      <h3>No hay usuarios</h3>
-      <p v-if="filtroRol">No se encontraron usuarios con rol "{{ filtroRol }}"</p>
-      <p v-else>No se encontraron usuarios en {{ tenantName }}</p>
-      <button @click="mostrarModalCrear = true" class="btn btn-success btn-small">
-        Crear Usuario
+      <h3>No hay usuarios registrados</h3>
+      <p v-if="filtroRol || filtroCargo">No se encontraron usuarios con los filtros aplicados</p>
+      <p v-else>Comienza agregando el primer usuario al sistema</p>
+      <button @click="mostrarModalCrear = true" class="btn btn-success btn-lg">
+        ➕ Crear Primer Usuario
       </button>
     </div>
 
@@ -180,28 +208,30 @@
         
         <div class="modal-body">
           <form @submit.prevent="crearUsuario" class="user-form">
-            <div class="form-group">
-              <label for="nombre">Nombre *</label>
-              <input 
-                id="nombre"
-                v-model="nuevoUsuario.nombre" 
-                type="text" 
-                required
-                placeholder="Ingresa el nombre"
-                class="form-input"
-              >
-            </div>
-            
-            <div class="form-group">
-              <label for="apellido">Apellido *</label>
-              <input 
-                id="apellido"
-                v-model="nuevoUsuario.apellido" 
-                type="text" 
-                required
-                placeholder="Ingresa el apellido"
-                class="form-input"
-              >
+            <div class="form-row">
+              <div class="form-group">
+                <label for="nombre">Nombre *</label>
+                <input 
+                  id="nombre"
+                  v-model="nuevoUsuario.nombre" 
+                  type="text" 
+                  required
+                  placeholder="Ingresa el nombre"
+                  class="form-input"
+                >
+              </div>
+              
+              <div class="form-group">
+                <label for="apellido">Apellido *</label>
+                <input 
+                  id="apellido"
+                  v-model="nuevoUsuario.apellido" 
+                  type="text" 
+                  required
+                  placeholder="Ingresa el apellido"
+                  class="form-input"
+                >
+              </div>
             </div>
             
             <div class="form-group">
@@ -211,15 +241,35 @@
                 v-model="nuevoUsuario.email" 
                 type="email" 
                 required
-                :placeholder="`Ej: usuario@${tenantDomain}`"
+                placeholder="usuario@empresa.com"
                 class="form-input"
-                :class="{ invalid: nuevoUsuario.email && !validarEmailDominio(nuevoUsuario.email) }"
               >
-              <small class="form-hint">Debe ser un email de {{ tenantName }}</small>
-              <small v-if="nuevoUsuario.email && !validarEmailDominio(nuevoUsuario.email)" 
-                     class="form-error">
-                El email debe pertenecer a {{ tenantName }}
-              </small>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="cargo">Cargo</label>
+                <input 
+                  id="cargo"
+                  v-model="nuevoUsuario.cargo" 
+                  type="text" 
+                  placeholder="Ej: Desarrollador, Diseñador..."
+                  class="form-input"
+                >
+              </div>
+              
+              <div class="form-group">
+                <label for="remuneracion">Remuneración</label>
+                <input 
+                  id="remuneracion"
+                  v-model="nuevoUsuario.remuneracion" 
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  class="form-input"
+                >
+              </div>
             </div>
             
             <div class="form-group">
@@ -230,22 +280,21 @@
                 required
                 class="form-select"
               >
-                <option value="Estudiante">Estudiante</option>
-                <option value="Profesor">Profesor</option>
-                <option value="Director">Director</option>
+                <option value="Empleado">Empleado</option>
+                <option value="Admin">Administrador</option>
               </select>
             </div>
           </form>
         </div>
         
         <div class="modal-footer">
-          <button @click="cerrarModal" class="btn btn-outline btn-small">Cancelar</button>
+          <button @click="cerrarModal" class="btn btn-outline">Cancelar</button>
           <button 
             @click="crearUsuario" 
-            :disabled="creandoUsuario || (nuevoUsuario.email && !validarEmailDominio(nuevoUsuario.email))" 
-            class="btn btn-success btn-small"
+            :disabled="creandoUsuario" 
+            class="btn btn-success"
           >
-            <span v-if="creandoUsuario" class="btn-spinner small"></span>
+            <span v-if="creandoUsuario" class="btn-spinner"></span>
             {{ creandoUsuario ? 'Creando...' : 'Crear Usuario' }}
           </button>
         </div>
@@ -259,13 +308,11 @@ import { ref, onMounted, computed } from 'vue'
 import { supabase } from '../supabase'
 
 export default {
-  name: 'UsersDashboard',
+  name: 'BD',
   setup() {
     // Estados reactivos
     const usuarios = ref([])
     const currentUserEmail = ref('')
-    const tenantName = ref('')
-    const tenantDomain = ref('')
     const cargando = ref(false)
     const error = ref('')
     const actualizandoId = ref(null)
@@ -273,20 +320,23 @@ export default {
     const mostrarModalCrear = ref(false)
     const filtroBusqueda = ref('')
     const filtroRol = ref('')
+    const filtroCargo = ref('')
     const mensajeAlerta = ref({
       show: false,
       text: '',
       type: 'success'
     })
 
-    const API_BASE_URL = 'http://localhost:5009/api/usuarios'
+    const API_BASE_URL = 'http://localhost:5009/api'
 
     // Nuevo usuario
     const nuevoUsuario = ref({
       nombre: '',
       apellido: '',
       email: '',
-      rol: 'Estudiante'
+      rol: 'Empleado',
+      cargo: '',
+      remuneracion: null
     })
 
     // Computed
@@ -300,7 +350,20 @@ export default {
           usuario.nombre?.toLowerCase().includes(search) ||
           usuario.apellido?.toLowerCase().includes(search) ||
           usuario.email?.toLowerCase().includes(search) ||
+          usuario.cargo?.toLowerCase().includes(search) ||
           usuario.rol?.toLowerCase().includes(search)
+        )
+      }
+      
+      // Aplicar filtro de rol
+      if (filtroRol.value) {
+        filtered = filtered.filter(usuario => usuario.rol === filtroRol.value)
+      }
+      
+      // Aplicar filtro de cargo
+      if (filtroCargo.value) {
+        filtered = filtered.filter(usuario => 
+          usuario.cargo?.toLowerCase().includes(filtroCargo.value.toLowerCase())
         )
       }
       
@@ -308,36 +371,8 @@ export default {
     })
 
     // Funciones
-    const getTenantFromEmail = (email) => {
-      if (email.endsWith('@ucb.edu.bo')) return 'ucb.edu.bo'
-      if (email.endsWith('@upb.edu.bo')) return 'upb.edu.bo'
-      if (email.endsWith('@gmail.com')) return 'gmail.com'
-      return 'unknown'
-    }
-
-    const getTenantDisplayName = (tenant) => {
-      switch (tenant) {
-        case 'ucb.edu.bo': return 'UCB'
-        case 'upb.edu.bo': return 'UPB'
-        case 'gmail.com': return 'Gmail'
-        default: return tenant
-      }
-    }
-
-    const getTenantDomain = (tenant) => {
-      switch (tenant) {
-        case 'ucb.edu.bo': return 'ucb.edu.bo'
-        case 'upb.edu.bo': return 'upb.edu.bo'
-        case 'gmail.com': return 'gmail.com'
-        default: return tenant
-      }
-    }
-
-    const validarEmailDominio = (email) => {
-      if (!currentUserEmail.value) return true
-      const userTenant = getTenantFromEmail(currentUserEmail.value)
-      const emailTenant = getTenantFromEmail(email)
-      return userTenant === emailTenant
+    const getInitials = (nombre, apellido) => {
+      return ((nombre?.[0] || '') + (apellido?.[0] || '')).toUpperCase()
     }
 
     const mostrarAlerta = (text, type = 'success') => {
@@ -351,32 +386,27 @@ export default {
       return usuarios.value.filter(u => u.rol === rol).length
     }
 
-    const aplicarFiltroRol = async () => {
+    const aplicarFiltros = async () => {
       cargando.value = true
       error.value = ''
       
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session?.user?.email) {
-          throw new Error('No hay usuario autenticado')
+        let url = `${API_BASE_URL}/usuarios/filtrar`
+        const params = new URLSearchParams()
+        
+        if (filtroRol.value) params.append('rol', filtroRol.value)
+        if (filtroCargo.value) params.append('cargo', filtroCargo.value)
+        
+        if (params.toString()) {
+          url += `?${params.toString()}`
         }
 
-        let url = `${API_BASE_URL}/mi-tenant`
-        if (filtroRol.value) {
-          url = `${API_BASE_URL}/mi-tenant/filtrar?rol=${encodeURIComponent(filtroRol.value)}`
-        }
-
-        const response = await fetch(url, {
-          headers: { 'X-User-Email': session.user.email }
-        })
+        const response = await fetch(url)
         
         if (!response.ok) throw new Error(`Error HTTP: ${response.status}`)
         
         const data = await response.json()
-        usuarios.value = data.usuarios.map(u => ({
-          ...u,
-          nuevoRol: u.rol
-        }))
+        usuarios.value = data.usuarios
         
       } catch (err) {
         error.value = `Error al cargar usuarios: ${err.message}`
@@ -386,43 +416,111 @@ export default {
       }
     }
 
-    const cargarUsuarios = async () => {
-      // Resetear filtros al cargar
+    const aplicarBusqueda = async () => {
+      if (!filtroBusqueda.value) {
+        await cargarUsuarios()
+        return
+      }
+
+      cargando.value = true
+      error.value = ''
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/usuarios/buscar?search=${encodeURIComponent(filtroBusqueda.value)}`)
+        
+        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`)
+        
+        const data = await response.json()
+        usuarios.value = data.usuarios
+        
+      } catch (err) {
+        error.value = `Error al buscar usuarios: ${err.message}`
+        console.error('Error:', err)
+      } finally {
+        cargando.value = false
+      }
+    }
+
+    const limpiarFiltros = () => {
       filtroRol.value = ''
-      await aplicarFiltroRol()
+      filtroCargo.value = ''
+      filtroBusqueda.value = ''
+      cargarUsuarios()
+    }
+
+    const cargarUsuarios = async () => {
+      cargando.value = true
+      error.value = ''
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/usuarios`)
+        
+        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`)
+        
+        const data = await response.json()
+        usuarios.value = data.usuarios
+        
+        // Obtener email del usuario actual
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user?.email) {
+          currentUserEmail.value = session.user.email
+        }
+        
+      } catch (err) {
+        error.value = `Error al cargar usuarios: ${err.message}`
+        console.error('Error:', err)
+      } finally {
+        cargando.value = false
+      }
     }
 
     const actualizarRol = async (usuario) => {
-      if (usuario.nuevoRol === usuario.rol) return
-      
       actualizandoId.value = usuario.id
       
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session?.user?.email) {
-          throw new Error('No hay usuario autenticado')
-        }
-
-        const response = await fetch(`${API_BASE_URL}/${usuario.id}/rol`, {
+        const response = await fetch(`${API_BASE_URL}/usuarios/${usuario.id}/rol`, {
           method: 'PUT',
           headers: {
-            'Content-Type': 'application/json',
-            'X-User-Email': session.user.email
+            'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ rol: usuario.nuevoRol })
+          body: JSON.stringify({ rol: usuario.rol })
         })
 
         if (!response.ok) throw new Error(`Error HTTP: ${response.status}`)
 
-        // Actualizar el rol localmente
-        usuario.rol = usuario.nuevoRol
         mostrarAlerta(`Rol actualizado correctamente para ${usuario.nombre}`, 'success')
         
       } catch (err) {
         console.error('Error actualizando rol:', err)
-        // Revertir el cambio en caso de error
-        usuario.nuevoRol = usuario.rol
+        // Recargar para revertir cambios
+        await cargarUsuarios()
         mostrarAlerta(`Error al actualizar rol: ${err.message}`, 'error')
+      } finally {
+        actualizandoId.value = null
+      }
+    }
+
+    const eliminarUsuario = async (usuario) => {
+      if (!confirm(`¿Estás seguro de que quieres eliminar a ${usuario.nombre} ${usuario.apellido}? Esta acción no se puede deshacer.`)) {
+        return
+      }
+
+      actualizandoId.value = usuario.id
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/usuarios/${usuario.id}`, {
+          method: 'DELETE'
+        })
+
+        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`)
+
+        // Eliminar localmente
+        usuarios.value = usuarios.value.filter(u => u.id !== usuario.id)
+        mostrarAlerta(`Usuario ${usuario.nombre} eliminado correctamente`, 'success')
+        
+      } catch (err) {
+        console.error('Error eliminando usuario:', err)
+        mostrarAlerta(`Error al eliminar usuario: ${err.message}`, 'error')
       } finally {
         actualizandoId.value = null
       }
@@ -430,29 +528,17 @@ export default {
 
     const crearUsuario = async () => {
       if (!nuevoUsuario.value.nombre || !nuevoUsuario.value.apellido || !nuevoUsuario.value.email) {
-        mostrarAlerta('Todos los campos son requeridos', 'error')
-        return
-      }
-
-      // Validar dominio del email
-      if (!validarEmailDominio(nuevoUsuario.value.email)) {
-        mostrarAlerta(`El email debe pertenecer al dominio ${tenantDomain.value}`, 'error')
+        mostrarAlerta('Nombre, apellido y email son requeridos', 'error')
         return
       }
 
       creandoUsuario.value = true
       
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session?.user?.email) {
-          throw new Error('No hay usuario autenticado')
-        }
-
-        const response = await fetch(`http://localhost:5009/api/crear`, {
+        const response = await fetch(`${API_BASE_URL}/usuarios`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'X-User-Email': session.user.email
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify(nuevoUsuario.value)
         })
@@ -484,7 +570,9 @@ export default {
         nombre: '',
         apellido: '',
         email: '',
-        rol: 'Estudiante'
+        rol: 'Empleado',
+        cargo: '',
+        remuneracion: null
       }
     }
 
@@ -496,8 +584,6 @@ export default {
       usuarios,
       usuariosFiltrados,
       currentUserEmail,
-      tenantName,
-      tenantDomain,
       cargando,
       error,
       actualizandoId,
@@ -505,91 +591,85 @@ export default {
       mostrarModalCrear,
       filtroBusqueda,
       filtroRol,
+      filtroCargo,
       mensajeAlerta,
       nuevoUsuario,
       cargarUsuarios,
       actualizarRol,
+      eliminarUsuario,
       crearUsuario,
       cerrarModal,
       contarPorRol,
       mostrarAlerta,
-      validarEmailDominio,
-      aplicarFiltroRol
+      aplicarFiltros,
+      aplicarBusqueda,
+      limpiarFiltros,
+      getInitials
     }
   }
 }
 </script>
 
 <style scoped>
-/* Estilos mejorados y responsive */
+/* Estilos generales */
 .dashboard-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 16px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Header compacto */
-.dashboard-header.compact {
+/* Header */
+.dashboard-header {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  border: 1px solid #e1e5e9;
+}
+
+.header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.header-main {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
 }
 
 .title {
-  color: white;
-  font-size: 1.75rem;
+  color: #2c3e50;
+  font-size: 2rem;
   font-weight: 700;
   margin: 0;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.user-badge {
+.user-info {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-wrap: wrap;
 }
 
 .user-email {
-  color: #2d3748;
+  background: #f8f9fa;
+  padding: 8px 16px;
+  border-radius: 20px;
   font-weight: 500;
-  background: rgba(255,255,255,0.9);
-  padding: 6px 12px;
-  border-radius: 6px;
-  backdrop-filter: blur(10px);
-  font-size: 0.875rem;
+  color: #6c757d;
+  border: 1px solid #e9ecef;
 }
 
-.tenant-badge {
-  background: rgba(255,255,255,0.2);
-  color: white;
-  padding: 6px 12px;
-  border-radius: 16px;
-  font-weight: 600;
-  backdrop-filter: blur(10px);
-  font-size: 0.875rem;
-}
-
-/* Alertas compactas */
-.alert.compact {
+/* Alertas */
+.alert {
   display: flex;
   align-items: center;
-  padding: 12px 16px;
+  padding: 16px 20px;
   border-radius: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   font-weight: 500;
-  gap: 8px;
-  font-size: 0.875rem;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .alert.success {
@@ -612,7 +692,7 @@ export default {
   margin-left: auto;
   background: none;
   border: none;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   cursor: pointer;
   opacity: 0.7;
 }
@@ -621,125 +701,166 @@ export default {
   opacity: 1;
 }
 
-/* Panel de Control compacto */
-.control-panel.compact {
+/* Panel de Control */
+.control-panel {
   background: white;
   border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  border: 1px solid #e1e5e9;
 }
 
-.control-group {
+.panel-header {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.panel-header h2 {
+  color: #2c3e50;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.control-buttons {
+  display: flex;
+  gap: 12px;
 }
 
 /* Filtros */
-.filters {
+.filters-section {
   display: flex;
-  gap: 16px;
+  gap: 20px;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
   flex-wrap: wrap;
 }
 
 .filter-group {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .filter-label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #2d3748;
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.9rem;
 }
 
-.filter-select {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 0.875rem;
+.filter-select, .filter-input {
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.9rem;
   background: white;
   color: #2d3748;
+  transition: all 0.3s ease;
+  min-width: 150px;
+}
+
+.filter-select:focus, .filter-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .search-group {
+  position: relative;
   display: flex;
   align-items: center;
 }
 
-.search-input.compact {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  width: 200px;
+.search-input {
+  padding: 10px 12px 10px 40px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  width: 280px;
   color: #2d3748;
+  transition: all 0.3s ease;
 }
 
-.search-input.compact:focus {
+.search-input:focus {
   outline: none;
   border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-/* Stats compactas */
-.stats.compact {
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: #6c757d;
+}
+
+/* Stats */
+.stats-section {
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 16px;
 }
 
-.stat-card.compact {
-  background: #f8f9fa;
-  padding: 12px 16px;
-  border-radius: 8px;
-  text-align: center;
-  min-width: 80px;
+.stat-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  flex: 1;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   border: 2px solid transparent;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-.stat-card.compact:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-.stat-card.compact.active {
-  background-color: #e3f2fd;
-  border-color: #2196f3;
+.stat-card.active {
+  border-color: #667eea;
+  background: #f8f9ff;
+}
+
+.stat-icon {
+  font-size: 2rem;
+  opacity: 0.8;
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
 }
 
 .stat-number {
-  display: block;
-  font-size: 1.25rem;
+  font-size: 1.75rem;
   font-weight: 700;
-  color: #667eea;
+  color: #2c3e50;
 }
 
 .stat-label {
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   color: #6c757d;
   font-weight: 500;
 }
 
-/* Botones compactos */
-.btn-small {
+/* Botones */
+.btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
+  gap: 8px;
+  padding: 10px 20px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   text-decoration: none;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
 }
 
 .btn:disabled {
@@ -767,15 +888,15 @@ export default {
   transform: translateY(-1px);
 }
 
-.btn-update {
-  background: #17a2b8;
+.btn-danger {
+  background: #dc3545;
   color: white;
-  padding: 6px 12px;
-  font-size: 0.75rem;
+  padding: 8px 16px;
+  font-size: 0.8rem;
 }
 
-.btn-update:hover:not(:disabled) {
-  background: #138496;
+.btn-danger:hover:not(:disabled) {
+  background: #c82333;
 }
 
 .btn-outline {
@@ -789,13 +910,23 @@ export default {
   color: white;
 }
 
-.btn-icon {
-  font-size: 0.9rem;
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.8rem;
 }
 
-.btn-spinner.small {
-  width: 12px;
-  height: 12px;
+.btn-lg {
+  padding: 12px 24px;
+  font-size: 1rem;
+}
+
+.btn-icon {
+  font-size: 1rem;
+}
+
+.btn-spinner {
+  width: 16px;
+  height: 16px;
   border: 2px solid transparent;
   border-top: 2px solid currentColor;
   border-radius: 50%;
@@ -806,186 +937,255 @@ export default {
   to { transform: rotate(360deg); }
 }
 
-/* Estados compactos */
-.loading-state.compact, .error-state.compact, .empty-state.compact {
+/* Estados */
+.loading-state, .error-state, .empty-state {
   text-align: center;
-  padding: 40px 20px;
+  padding: 60px 20px;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-  margin: 0 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  border: 1px solid #e1e5e9;
 }
 
-.spinner.small {
-  width: 32px;
-  height: 32px;
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #667eea;
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin: 0 auto 16px;
+  margin: 0 auto 20px;
 }
 
 .error-icon, .empty-icon {
-  font-size: 2.5rem;
-  margin-bottom: 16px;
+  font-size: 3rem;
+  margin-bottom: 20px;
+  opacity: 0.7;
 }
 
-/* Tabla compacta */
-.table-container.compact {
+.error-state h3, .empty-state h3 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.error-state p, .empty-state p {
+  color: #6c757d;
+  margin-bottom: 20px;
+}
+
+/* Tabla */
+.table-section {
   background: white;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-  margin: 0 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  border: 1px solid #e1e5e9;
 }
 
-.table-header.compact {
-  padding: 16px 20px;
+.table-header {
+  padding: 20px 24px;
   border-bottom: 1px solid #e9ecef;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
 }
 
-.table-header.compact h3 {
+.table-header h3 {
   margin: 0;
-  color: #2d3748;
-  font-size: 1.1rem;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.table-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-count {
+  color: #6c757d;
+  font-weight: 500;
 }
 
 .filter-indicator {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.filter-tag {
   background: #e3f2fd;
-  padding: 4px 12px;
-  border-radius: 12px;
   color: #1976d2;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.filter-separator {
+  color: #adb5bd;
 }
 
 .clear-filter {
   background: none;
   border: none;
+  color: #667eea;
   cursor: pointer;
-  font-size: 1.1rem;
-  line-height: 1;
-  color: #666;
-  padding: 0;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-size: 0.8rem;
+  text-decoration: underline;
 }
 
 .clear-filter:hover {
-  color: #333;
+  color: #5a6fd8;
 }
 
-.table-responsive.compact {
+.table-container {
   overflow-x: auto;
 }
 
-.users-table.compact {
+.users-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.8rem;
 }
 
-.users-table.compact th {
+.users-table th {
   background: #f8f9fa;
-  padding: 12px 8px;
+  padding: 16px 12px;
   text-align: left;
   font-weight: 600;
-  color: #2d3748;
+  color: #495057;
   border-bottom: 1px solid #e9ecef;
   white-space: nowrap;
+  font-size: 0.9rem;
 }
 
-.users-table.compact td {
-  padding: 10px 8px;
+.users-table td {
+  padding: 16px 12px;
   border-bottom: 1px solid #e9ecef;
   color: #2d3748;
   vertical-align: middle;
 }
 
-.users-table.compact tr:hover {
+.users-table tr:hover {
   background: #f8f9fa;
 }
 
-/* Columnas compactas */
-.col-id { width: 60px; }
-.col-name { width: 140px; }
-.col-email { width: 180px; }
-.col-role { width: 100px; }
-.col-new-role { width: 120px; }
-.col-actions { width: 90px; }
+/* Columnas */
+.col-name { width: 220px; }
+.col-email { width: 240px; }
+.col-cargo { width: 160px; }
+.col-remuneracion { width: 140px; }
+.col-role { width: 160px; }
+.col-actions { width: 120px; }
 
+/* Filas de usuario */
 .user-row {
-  height: 44px;
+  transition: all 0.2s ease;
 }
 
-.name-display {
-  line-height: 1.2;
+.user-name {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.user-email.compact {
-  font-size: 0.75rem;
-  color: #666;
-}
-
-/* Badges de rol compactos */
-.role-badge {
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.7rem;
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  display: inline-block;
-  text-align: center;
-  min-width: 70px;
+  font-size: 0.9rem;
 }
 
-.role-estudiante {
-  background: #e3f2fd;
-  color: #1976d2;
+.name-info {
+  display: flex;
+  flex-direction: column;
 }
 
-.role-profesor {
-  background: #f3e5f5;
-  color: #7b1fa2;
+.name-info strong {
+  color: #2c3e50;
 }
 
-.role-director {
+.name-info small {
+  color: #6c757d;
+  font-size: 0.75rem;
+}
+
+.user-email {
+  color: #495057;
+}
+
+.email-text {
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+}
+
+.user-cargo .cargo-badge {
   background: #e8f5e8;
   color: #2e7d32;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
 }
 
-/* Select de roles compacto */
-.role-select.compact {
-  padding: 6px 8px;
+.user-remuneracion .remuneracion-value {
+  font-weight: 600;
+  color: #28a745;
+  font-family: 'Courier New', monospace;
+}
+
+/* Select de roles */
+.role-select {
+  padding: 8px 12px;
   border: 1px solid #e2e8f0;
-  border-radius: 4px;
-  font-size: 0.75rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
   transition: all 0.3s ease;
   background: white;
   color: #2d3748;
   width: 100%;
+  cursor: pointer;
 }
 
-.role-select.compact:focus {
+.role-select:focus {
   outline: none;
   border-color: #667eea;
 }
 
-.role-select.compact.changed {
-  border-color: #ffc107;
-  background: #fffbf0;
+.role-select.role-admin {
+  background: #e3f2fd;
+  border-color: #2196f3;
+  color: #1976d2;
+}
+
+.role-select.role-empleado {
+  background: #e8f5e8;
+  border-color: #4caf50;
+  color: #2e7d32;
+}
+
+.user-role {
+  position: relative;
+}
+
+.update-spinner {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
 /* Modal */
@@ -1000,21 +1200,22 @@ export default {
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 16px;
+  padding: 20px;
+  backdrop-filter: blur(4px);
 }
 
 .modal {
   background: white;
   border-radius: 12px;
   width: 100%;
-  max-width: 450px;
+  max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 16px 48px rgba(0,0,0,0.3);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
 }
 
 .modal-header {
-  padding: 20px;
+  padding: 24px;
   border-bottom: 1px solid #e9ecef;
   display: flex;
   justify-content: space-between;
@@ -1023,37 +1224,40 @@ export default {
 
 .modal-header h3 {
   margin: 0;
-  color: #2d3748;
-  font-size: 1.2rem;
+  color: #2c3e50;
+  font-weight: 600;
 }
 
 .modal-close {
   background: none;
   border: none;
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   cursor: pointer;
   color: #6c757d;
   padding: 0;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
 }
 
 .modal-close:hover {
+  background: #f8f9fa;
   color: #495057;
 }
 
 .modal-body {
-  padding: 20px;
+  padding: 24px;
 }
 
 .modal-footer {
-  padding: 20px;
+  padding: 24px;
   border-top: 1px solid #e9ecef;
   display: flex;
-  gap: 10px;
+  gap: 12px;
   justify-content: flex-end;
 }
 
@@ -1061,105 +1265,110 @@ export default {
 .user-form {
   display: flex;
   flex-direction: column;
+  gap: 20px;
+}
+
+.form-row {
+  display: flex;
   gap: 16px;
+}
+
+.form-row .form-group {
+  flex: 1;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .form-group label {
   font-weight: 600;
-  color: #2d3748;
-  font-size: 0.8rem;
+  color: #495057;
+  font-size: 0.9rem;
 }
 
 .form-input, .form-select {
-  padding: 10px 12px;
+  padding: 12px;
   border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  transition: border-color 0.3s ease;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
   color: #2d3748;
+  background: white;
 }
 
 .form-input:focus, .form-select:focus {
   outline: none;
   border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .form-input::placeholder {
   color: #a0aec0;
 }
 
-.form-hint {
-  color: #6c757d;
-  font-size: 0.7rem;
-  margin-top: 2px;
-}
-
-/* Estilos para validación */
-.form-input.invalid {
-  border-color: #e53e3e;
-  background-color: #fed7d7;
-}
-
-.form-error {
-  color: #e53e3e;
-  font-size: 0.7rem;
-  margin-top: 2px;
-  display: block;
-}
-
 /* Responsive */
 @media (max-width: 768px) {
-  .dashboard-header.compact {
+  .dashboard-container {
+    padding: 16px;
+  }
+  
+  .header-content {
     flex-direction: column;
     align-items: flex-start;
+    gap: 16px;
   }
   
-  .header-main {
+  .title {
+    font-size: 1.5rem;
+  }
+  
+  .control-panel {
+    padding: 20px;
+  }
+  
+  .panel-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: 16px;
   }
   
-  .control-panel.compact {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .filters {
+  .filters-section {
     flex-direction: column;
     align-items: stretch;
   }
   
   .filter-group {
-    justify-content: space-between;
-  }
-  
-  .search-input.compact {
     width: 100%;
   }
   
-  .stats.compact {
-    justify-content: center;
+  .filter-select, .filter-input {
+    width: 100%;
   }
   
-  .table-header.compact {
+  .search-input {
+    width: 100%;
+  }
+  
+  .stats-section {
+    flex-direction: column;
+  }
+  
+  .table-header {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
   }
   
-  .users-table.compact {
-    font-size: 0.75rem;
+  .users-table {
+    font-size: 0.8rem;
   }
   
-  .users-table.compact th,
-  .users-table.compact td {
-    padding: 8px 6px;
+  .form-row {
+    flex-direction: column;
+    gap: 16px;
   }
   
   .modal {
@@ -1173,37 +1382,20 @@ export default {
 }
 
 @media (max-width: 480px) {
-  .dashboard-container {
-    padding: 12px;
-  }
-  
-  .title {
-    font-size: 1.5rem;
-  }
-  
-  .control-group {
+  .control-buttons {
     flex-direction: column;
     width: 100%;
   }
   
-  .btn-small {
+  .btn {
     width: 100%;
     justify-content: center;
   }
   
-  .stats.compact {
+  .user-actions {
+    display: flex;
     flex-direction: column;
+    gap: 8px;
   }
-  
-  .stat-card.compact {
-    width: 100%;
-  }
-  
-  .col-id { width: 50px; }
-  .col-name { width: 120px; }
-  .col-email { width: 150px; }
-  .col-role { width: 80px; }
-  .col-new-role { width: 100px; }
-  .col-actions { width: 80px; }
 }
 </style>

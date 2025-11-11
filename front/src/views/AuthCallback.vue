@@ -2,25 +2,23 @@
   <div class="callback-container">
     <div class="loading-spinner"></div>
     <p>Procesando autenticación...</p>
+    <p v-if="error" class="error-message">{{ error }}</p>
   </div>
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '../supabase'
 
 const router = useRouter()
+const error = ref(null)
 
-// 🔹 FUNCIÓN: Obtener tenant del email
-function getTenantFromEmail(email) {
-  if (email.endsWith('@ucb.edu.bo')) return 'ucb.edu.bo'
-  if (email.endsWith('@upb.edu.bo')) return 'upb.edu.bo'
-  if (email.endsWith('@gmail.com')) return 'gmail.com'
-  return null
+// Verificar si el email está verificado
+function isEmailVerified(user) {
+  return user.email_confirmed_at || user.confirmed_at || user.email_verified
 }
 
-// 🔹 FUNCIÓN: Hacer sync del usuario
 async function syncUser(session) {
   try {
     const userEmail = session.user?.email
@@ -29,23 +27,22 @@ async function syncUser(session) {
       return false
     }
 
-    const tenant = getTenantFromEmail(userEmail)
-    if (!tenant) {
-      console.error('❌ Dominio de email no permitido:', userEmail)
+    // Verificar que el email esté confirmado
+    if (!isEmailVerified(session.user)) {
+      console.error('❌ Email no verificado')
       return false
     }
 
     const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:5002' : '/api/auth'
     
-    console.log('🔹 Llamando a sync-user...', { email: userEmail, tenant })
+    console.log('🔹 Llamando a sync-user...', { email: userEmail })
     
     const response = await fetch(`${backendUrl}/api/auth/sync-user`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
         'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ tenant })
+      }
     })
 
     if (response.ok) {
@@ -55,6 +52,12 @@ async function syncUser(session) {
     } else {
       const errorText = await response.text()
       console.error('❌ Error en sync-user:', errorText)
+      
+      // Si el error es que el usuario ya existe, considerar éxito
+      if (response.status === 400 && errorText.includes('ya existe')) {
+        console.log('✅ Usuario ya existe, continuando...')
+        return true
+      }
       return false
     }
   } catch (error) {
@@ -68,33 +71,51 @@ onMounted(async () => {
     console.log('🔄 Procesando callback de OAuth...')
     
     // Obtener la sesión después del redirect de OAuth
-    const { data: { session }, error } = await supabase.auth.getSession()
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
     
-    if (error) {
-      console.error('❌ Error en callback:', error)
-      router.push('/signin?error=auth_failed')
+    if (sessionError) {
+      console.error('❌ Error en callback:', sessionError)
+      error.value = 'Error de autenticación. Intenta nuevamente.'
+      setTimeout(() => router.push('/signin?error=auth_failed'), 3000)
       return
     }
     
     if (session) {
       console.log('✅ Sesión obtenida correctamente en callback')
+      console.log('📧 Email verificado:', isEmailVerified(session.user))
       
       // Guardar el token
       localStorage.setItem('token', session.access_token)
       
+      // Verificar email confirmado
+      if (!isEmailVerified(session.user)) {
+        console.warn('⚠️ Email no verificado')
+        error.value = 'Por favor, verifica tu email antes de continuar.'
+        setTimeout(() => router.push('/signin?error=email_not_verified'), 3000)
+        return
+      }
+      
       // 🔹 HACER SYNC DEL USUARIO ANTES DE REDIRIGIR
       console.log('🔄 Sincronizando usuario...')
-      await syncUser(session)
+      const syncSuccess = await syncUser(session)
       
-      // Redirigir al home
-      router.push('/home')
+      if (syncSuccess) {
+        console.log('✅ Sync exitoso, redirigiendo a home...')
+        router.push('/home')
+      } else {
+        console.warn('⚠️ Sync falló, pero redirigiendo igual...')
+        // Redirigir incluso si el sync falló
+        router.push('/home')
+      }
     } else {
       console.warn('⚠️ No se encontró sesión en callback')
-      router.push('/signin?error=no_session')
+      error.value = 'No se pudo obtener la sesión. Intenta nuevamente.'
+      setTimeout(() => router.push('/signin?error=no_session'), 3000)
     }
-  } catch (error) {
-    console.error('❌ Error inesperado en callback:', error)
-    router.push('/signin?error=callback_failed')
+  } catch (catchError) {
+    console.error('❌ Error inesperado en callback:', catchError)
+    error.value = 'Error inesperado. Intenta nuevamente.'
+    setTimeout(() => router.push('/signin?error=callback_failed'), 3000)
   }
 })
 </script>
@@ -109,6 +130,8 @@ onMounted(async () => {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   font-family: 'Inter', sans-serif;
+  text-align: center;
+  padding: 2rem;
 }
 
 .loading-spinner {
@@ -129,5 +152,15 @@ onMounted(async () => {
 p {
   font-size: 1.1rem;
   font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.error-message {
+  background: rgba(220, 38, 38, 0.9);
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  margin-top: 1rem;
+  font-weight: 600;
+  max-width: 400px;
 }
 </style>

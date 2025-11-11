@@ -48,11 +48,9 @@ const getBackendUrl = () => {
   return '/api/auth'
 }
 
-function getTenantFromEmail(email) {
-  if (email.endsWith('@ucb.edu.bo')) return 'ucb.edu.bo'
-  if (email.endsWith('@upb.edu.bo')) return 'upb.edu.bo'
-  if (email.endsWith('@gmail.com')) return 'gmail.com'
-  return null
+// Verificar si el email está verificado
+function isEmailVerified(user) {
+  return user.email_confirmed_at || user.confirmed_at || user.email_verified
 }
 
 async function processSession(session) {
@@ -67,9 +65,9 @@ async function processSession(session) {
     return
   }
 
-  const tenant = getTenantFromEmail(userEmail)
-  if (!tenant) {
-    error.value = 'Dominio de correo no permitido.'
+  // Verificar que el email esté confirmado en Supabase
+  if (!isEmailVerified(session.user)) {
+    error.value = 'Por favor, verifica tu email antes de iniciar sesión.'
     return
   }
 
@@ -80,19 +78,30 @@ async function processSession(session) {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ tenant })
+      }
     })
 
     if (!res.ok) {
       const backendError = await res.text()
       console.warn('Sync-user falló:', backendError)
+      
+      // Si hay error pero el usuario está autenticado, redirigir igual
+      if (res.status === 400 || res.status === 500) {
+        console.log('Redirigiendo a pesar del error en sync-user')
+        router.push('/home')
+        return
+      }
+    } else {
+      console.log('✅ Sync-user exitoso')
     }
   } catch (e) {
     console.warn('No se pudo sincronizar con backend:', e)
+    // Redirigir incluso si hay error de sync
+    router.push('/home')
+    return
   }
 
-  // 🔹 REDIRIGIR AL HOME - esto falta en tu código actual
+  // 🔹 REDIRIGIR AL HOME
   router.push('/home')
 }
 
@@ -105,17 +114,25 @@ async function handleSignIn() {
       email: email.value,
       password: password.value
     })
+    
     if (err) throw err
     if (!data.session?.access_token) throw new Error('No se recibió token de Supabase.')
+    
+    // Verificar email confirmado
+    if (!isEmailVerified(data.user)) {
+      throw new Error('Por favor, verifica tu email antes de iniciar sesión.')
+    }
+    
     await processSession(data.session)
   } catch (e) {
     error.value = e.message || 'Error inesperado. Intenta nuevamente.'
+    console.error('Error en login:', e)
   } finally {
     loading.value = false
   }
 }
 
-// 🔹 LOGIN CON GOOGLE SIMPLIFICADO - solo inicia el flujo
+// Login con Google
 async function handleGoogleSignIn() {
   try {
     error.value = null
@@ -124,7 +141,11 @@ async function handleGoogleSignIn() {
     const { error: err } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { 
-        redirectTo: `${window.location.origin}/auth/callback`
+        redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent'
+        }
       }
     })
     
@@ -139,17 +160,15 @@ async function handleGoogleSignIn() {
 }
 
 onMounted(async () => {
-
   const { data: { session } } = await supabase.auth.getSession()
-  if (session?.access_token) {
- 
+  if (session?.access_token && isEmailVerified(session.user)) {
+    localStorage.setItem('token', session.access_token)
     router.push('/home')
   }
 })
 </script>
 
 <style scoped>
-
 .signin-container {
   max-width: 400px;
   margin: 5rem auto;
@@ -160,19 +179,112 @@ onMounted(async () => {
   font-family: 'Inter', sans-serif;
   text-align: center;
 }
-.title { font-size: 1.75rem; font-weight: 700; margin-bottom: 2rem; color: #1f2937; }
-.signin-form .input-group { margin-bottom: 1.5rem; text-align: left; }
-.signin-form label { display: block; margin-bottom: 0.4rem; font-weight: 600; color: #374151; }
-.signin-form input { width: 100%; padding: 0.75rem; border-radius: 0.75rem; border: 1px solid #d1d5db; background: #f9fafb; transition: border 0.2s ease; }
-.signin-form input:focus { border-color: #4f46e5; outline: none; background: #fff; }
-.btn-primary { width: 100%; padding: 0.85rem; border: none; border-radius: 0.75rem; background-color: #4f46e5; color: white; font-weight: 600; cursor: pointer; transition: background 0.3s ease; margin-top: 0.5rem; }
-.btn-primary:disabled { background-color: #a5b4fc; cursor: not-allowed; }
-.btn-primary:hover:not(:disabled) { background-color: #3730a3; }
-.divider { display: flex; align-items: center; margin: 1.5rem 0; color: #6b7280; font-size: 0.9rem; }
-.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #e5e7eb; }
-.divider span { margin: 0 0.75rem; }
-.btn-google { width: 100%; padding: 0.85rem; border: 1px solid #d1d5db; border-radius: 0.75rem; background-color: #fff; font-weight: 600; color: #374151; display: flex; align-items: center; justify-content: center; gap: 0.75rem; cursor: pointer; transition: background 0.2s ease, border 0.2s ease; }
-.btn-google:hover { background-color: #f9fafb; border-color: #9ca3af; }
-.btn-google img { width: 20px; height: 20px; }
-.error { margin-top: 1rem; color: #dc2626; font-weight: bold; font-size: 0.9rem; }
+
+.title { 
+  font-size: 1.75rem; 
+  font-weight: 700; 
+  margin-bottom: 2rem; 
+  color: #1f2937; 
+}
+
+.signin-form .input-group { 
+  margin-bottom: 1.5rem; 
+  text-align: left; 
+}
+
+.signin-form label { 
+  display: block; 
+  margin-bottom: 0.4rem; 
+  font-weight: 600; 
+  color: #374151; 
+}
+
+.signin-form input { 
+  width: 100%; 
+  padding: 0.75rem; 
+  border-radius: 0.75rem; 
+  border: 1px solid #d1d5db; 
+  background: #f9fafb; 
+  transition: border 0.2s ease; 
+}
+
+.signin-form input:focus { 
+  border-color: #4f46e5; 
+  outline: none; 
+  background: #fff; 
+}
+
+.btn-primary { 
+  width: 100%; 
+  padding: 0.85rem; 
+  border: none; 
+  border-radius: 0.75rem; 
+  background-color: #4f46e5; 
+  color: white; 
+  font-weight: 600; 
+  cursor: pointer; 
+  transition: background 0.3s ease; 
+  margin-top: 0.5rem; 
+}
+
+.btn-primary:disabled { 
+  background-color: #a5b4fc; 
+  cursor: not-allowed; 
+}
+
+.btn-primary:hover:not(:disabled) { 
+  background-color: #3730a3; 
+}
+
+.divider { 
+  display: flex; 
+  align-items: center; 
+  margin: 1.5rem 0; 
+  color: #6b7280; 
+  font-size: 0.9rem; 
+}
+
+.divider::before, .divider::after { 
+  content: ''; 
+  flex: 1; 
+  height: 1px; 
+  background: #e5e7eb; 
+}
+
+.divider span { 
+  margin: 0 0.75rem; 
+}
+
+.btn-google { 
+  width: 100%; 
+  padding: 0.85rem; 
+  border: 1px solid #d1d5db; 
+  border-radius: 0.75rem; 
+  background-color: #fff; 
+  font-weight: 600; 
+  color: #374151; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  gap: 0.75rem; 
+  cursor: pointer; 
+  transition: background 0.2s ease, border 0.2s ease; 
+}
+
+.btn-google:hover { 
+  background-color: #f9fafb; 
+  border-color: #9ca3af; 
+}
+
+.btn-google img { 
+  width: 20px; 
+  height: 20px; 
+}
+
+.error { 
+  margin-top: 1rem; 
+  color: #dc2626; 
+  font-weight: bold; 
+  font-size: 0.9rem; 
+}
 </style>
