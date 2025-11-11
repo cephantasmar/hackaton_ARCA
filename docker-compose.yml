@@ -1,4 +1,3 @@
-
 services:
   auth:
     build: ./back/Auth
@@ -29,3 +28,10 @@ services:
       - "5009:8080"
     env_file:
       - ./back/Roles/.env
+  contracts-service:
+    build: ./back/contracts_service
+    ports:
+      - "5003:5003"
+    env_file:
+      - ./back/contracts_service/.env
+

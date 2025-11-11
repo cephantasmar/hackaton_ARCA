@@ -15,6 +15,8 @@ import Base from './views/BD.vue'
 import Courses from './views/Courses.vue'
 import MyCourses from './views/MyCourses.vue'
 import CourseDetail from './views/CourseDetail.vue'
+import Contracts from './views/Contracts.vue'
+import ContractDetail from './views/contractDetail.vue'
 
 const routes = [
   { 
@@ -85,6 +87,16 @@ const routes = [
   { 
     path: '/courses/:id', 
     component: CourseDetail, 
+    meta: { requiresAuth: true } 
+  },
+  { 
+    path: '/contracts', 
+    component: Contracts, 
+    meta: { requiresAuth: true } 
+  },
+  { 
+    path: '/contracts/:id', 
+    component: ContractDetail, 
     meta: { requiresAuth: true } 
   },
   { 

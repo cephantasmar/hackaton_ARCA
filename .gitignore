@@ -21,3 +21,4 @@ packages/
 
 # Config locales
 appsettings.Development.json
+node_modules/

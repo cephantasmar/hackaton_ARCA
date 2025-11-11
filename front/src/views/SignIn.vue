@@ -93,7 +93,7 @@ async function processSession(session) {
   }
 
   // 🔹 REDIRIGIR AL HOME - esto falta en tu código actual
-  router.push('/home')
+  router.push('/contracts')
 }
 
 // Login con email/password

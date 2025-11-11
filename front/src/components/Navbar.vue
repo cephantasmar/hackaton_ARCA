@@ -1,7 +1,7 @@
 <template>
   <div v-if="showNavbar" class="navbar-wrapper">
     <!-- HEADER -->
-    <header class="site-header">
+    <!-- <header class="site-header">
       <div class="container">
         <div class="header-content">
           <h1 class="site-title">StudentGest</h1>
@@ -11,7 +11,7 @@
           </div>
         </div>
       </div>
-    </header>
+    </header> -->
 
     <!-- NAVIGATION -->
     <nav class="site-nav">
@@ -19,7 +19,7 @@
         <!-- Desktop Navigation -->
         <div class="nav-desktop">
           <div class="nav-main">
-            <router-link to="/home" class="nav-link">Inicio</router-link>
+            <!-- <router-link to="/home" class="nav-link">Inicio</router-link>
             <router-link to="/foro" class="nav-link">Foro</router-link>
             <router-link to="/pricing" class="nav-link">Precios</router-link>
             <router-link to="/nosotros" class="nav-link">Nosotros</router-link>
@@ -31,6 +31,13 @@
               class="nav-link admin-link"
             >
               Roles
+            </router-link> -->
+            <router-link 
+              
+              to="/contracts" 
+              class="nav-link admin-link"
+            >
+              Contratos
             </router-link>
           </div>
 
@@ -72,7 +79,16 @@
                 class="nav-link admin-link"
                 @click="toggleMobileMenu"
               >
-                Base de Datos
+                Roles
+              </router-link>
+              
+              <router-link 
+                
+                to="/contracts" 
+                class="nav-link admin-link"
+                @click="toggleMobileMenu"
+              >
+                Contratos
               </router-link>
               
               <button @click="handleLogout" class="logout-btn mobile-logout" :disabled="loading">
