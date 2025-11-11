@@ -6,6 +6,13 @@ export default defineConfig({
   server: {
     port: 5173,
     open: true,
+    proxy: {
+      '/api/vacations': {
+        target: 'http://localhost:5010',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/vacations/, '/api/vacations')
+      }
+    }
   },
   build: {
     outDir: 'dist',

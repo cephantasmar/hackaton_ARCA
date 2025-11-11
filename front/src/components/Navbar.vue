@@ -25,12 +25,20 @@
             <router-link to="/nosotros" class="nav-link">Nosotros</router-link>
             <router-link to="/courses" class="nav-link" >Cursos</router-link>
             <router-link to="/my-courses" class="nav-link">Mis Cursos</router-link>
+            <router-link to="/my-vacations" class="nav-link">Mis Vacaciones</router-link>
             <router-link 
               v-if="userProfile?.rol === 'Director'" 
               to="/base" 
               class="nav-link admin-link"
             >
               Roles
+            </router-link>
+            <router-link 
+              v-if="userProfile?.rol === 'Director'" 
+              to="/vacations-management" 
+              class="nav-link admin-link"
+            >
+              Gestión Vacaciones
             </router-link>
           </div>
 
@@ -64,7 +72,7 @@
               <router-link to="/nosotros" class="nav-link" @click="toggleMobileMenu">Nosotros</router-link>
               <router-link to="/courses" class="nav-link" @click="toggleMobileMenu">Cursos</router-link>
               <router-link to="/my-courses" class="nav-link" @click="toggleMobileMenu">Mis Cursos</router-link>
-              
+              <router-link to="/my-vacations" class="nav-link" @click="toggleMobileMenu">Mis Vacaciones</router-link>
 
               <router-link 
                 v-if="userProfile?.rol === 'Director'" 
@@ -73,6 +81,15 @@
                 @click="toggleMobileMenu"
               >
                 Base de Datos
+              </router-link>
+              
+              <router-link 
+                v-if="userProfile?.rol === 'Director'" 
+                to="/vacations-management" 
+                class="nav-link admin-link"
+                @click="toggleMobileMenu"
+              >
+                Gestión Vacaciones
               </router-link>
               
               <button @click="handleLogout" class="logout-btn mobile-logout" :disabled="loading">

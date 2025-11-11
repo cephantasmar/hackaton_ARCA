@@ -29,3 +29,15 @@ services:
       - "5009:8080"
     env_file:
       - ./back/Roles/.env
+
+  vacations:
+    build: ./back/Vacations
+    ports:
+      - "5010:8000"
+    env_file:
+      - ./back/Vacations/.env
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

@@ -15,6 +15,8 @@ import Base from './views/BD.vue'
 import Courses from './views/Courses.vue'
 import MyCourses from './views/MyCourses.vue'
 import CourseDetail from './views/CourseDetail.vue'
+import MyVacations from './views/MyVacations.vue'
+import VacationsManagement from './views/VacationsManagement.vue'
 
 const routes = [
   { 
@@ -86,6 +88,19 @@ const routes = [
     path: '/courses/:id', 
     component: CourseDetail, 
     meta: { requiresAuth: true } 
+  },
+  { 
+    path: '/my-vacations', 
+    component: MyVacations, 
+    meta: { requiresAuth: true } 
+  },
+  { 
+    path: '/vacations-management', 
+    component: VacationsManagement, 
+    meta: { 
+      requiresAuth: true,
+      requiresDirector: true 
+    } 
   },
   { 
     path: '/:pathMatch(.*)*', 
